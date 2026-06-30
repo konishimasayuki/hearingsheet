@@ -37,10 +37,16 @@ async function notifyEmail(record) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
 
-  const text = Object.entries(record)
-    .filter(([k, v]) => v != null && String(v).length > 0)
-    .map(([k, v]) => `${LABELS[k] || k}: ${Array.isArray(v) ? v.join("、") : v}`)
-    .join("\n");
+  // 完了画面の「控えコピー」と同じ見やすい形式に揃える
+  const lines = ["■ システム開発 ヒアリングシート", ""];
+  for (const k of Object.keys(LABELS)) {
+    const v = record[k];
+    if (v == null || (Array.isArray(v) && v.length === 0) || String(v).trim() === "") continue;
+    lines.push(`【${LABELS[k]}】`);
+    lines.push(Array.isArray(v) ? v.join("、") : String(v));
+    lines.push("");
+  }
+  const text = lines.join("\n").trim();
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",
